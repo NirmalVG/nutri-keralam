@@ -1,1 +1,6 @@
-// Flows will be imported for their side effects in this file.
+import { config } from 'dotenv';
+config();
+
+import '@/ai/flows/recognize-food-from-image.ts';
+import '@/ai/flows/generate-ai-meal-plan.ts';
+import '@/ai/flows/extract-lab-report-markers-flow.ts';

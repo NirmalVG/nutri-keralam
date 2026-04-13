@@ -1,3 +1,22 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-food",
+      "description": "A vibrant spread of traditional Kerala Sadya on a banana leaf",
+      "imageUrl": "https://picsum.photos/seed/keralafood/1200/800",
+      "imageHint": "Indian food"
+    },
+    {
+      "id": "health-tracking",
+      "description": "Abstract health tracking visual",
+      "imageUrl": "https://picsum.photos/seed/healthstats/800/600",
+      "imageHint": "health tracking"
+    },
+    {
+      "id": "ai-coach",
+      "description": "Modern AI digital assistant avatar",
+      "imageUrl": "https://picsum.photos/seed/aicoach/400/400",
+      "imageHint": "AI assistant"
+    }
+  ]
 }
