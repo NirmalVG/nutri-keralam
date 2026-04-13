@@ -1,0 +1,1241 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user's profile and core health information within the NutriKeralam application. This entity assumes an external authentication system manages user credentials.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity. This typically correlates with a user ID from an external authentication system."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's primary email address.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The user's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The user's last name."
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "description": "The user's date of birth.",
+          "format": "date"
+        },
+        "gender": {
+          "type": "string",
+          "description": "The user's self-identified gender."
+        },
+        "heightCm": {
+          "type": "number",
+          "description": "The user's height in centimeters."
+        },
+        "currentWeightKg": {
+          "type": "number",
+          "description": "The user's most recently recorded weight in kilograms. This can be updated from the latest WeightLog entry."
+        },
+        "activityLevel": {
+          "type": "string",
+          "description": "The user's self-reported physical activity level (e.g., 'sedentary', 'moderately active', 'very active')."
+        },
+        "dietaryPreferences": {
+          "type": "array",
+          "description": "A list of the user's dietary preferences or restrictions (e.g., 'vegetarian', 'vegan', 'gluten-free', 'nut-allergy').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "healthConditionIds": {
+          "type": "array",
+          "description": "References to HealthCondition entities associated with the user, indicating their health concerns. (Relationship: UserProfile N:N HealthCondition)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "preferredLanguage": {
+          "type": "string",
+          "description": "The user's preferred language for the application interface and AI interactions (e.g., 'en' for English, 'ml' for Malayalam)."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "dateOfBirth",
+        "gender",
+        "heightCm",
+        "currentWeightKg",
+        "activityLevel",
+        "preferredLanguage",
+        "createdAt"
+      ]
+    },
+    "HealthCondition": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HealthCondition",
+      "type": "object",
+      "description": "Defines a health condition for which tailored diet plans can be provided.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the HealthCondition entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The common name of the health condition (e.g., 'Diabetes', 'PCOS', 'Pregnancy')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the health condition and its implications for diet."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "DietPlan": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DietPlan",
+      "type": "object",
+      "description": "Represents a personalized diet plan generated for a user, potentially in response to health conditions or goals.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the DietPlan entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who owns this diet plan. (Relationship: UserProfile 1:N DietPlan)"
+        },
+        "healthConditionId": {
+          "type": "string",
+          "description": "Optional reference to a HealthCondition this diet plan is designed for. (Relationship: HealthCondition 1:N DietPlan)"
+        },
+        "name": {
+          "type": "string",
+          "description": "A descriptive name for the diet plan (e.g., 'My Diabetes Plan', 'Weight Loss Plan')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief summary or goal of the diet plan."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "The date when this diet plan officially began.",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "The date when this diet plan is scheduled to conclude.",
+          "format": "date"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Indicates if this is the user's currently active diet plan."
+        },
+        "dailyCalorieTarget": {
+          "type": "number",
+          "description": "The target daily calorie intake for this diet plan in kilocalories."
+        },
+        "generatedByAI": {
+          "type": "boolean",
+          "description": "Indicates if this diet plan was initially generated or significantly modified by the AI coach."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the diet plan was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the diet plan was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "startDate",
+        "isActive",
+        "dailyCalorieTarget",
+        "createdAt"
+      ]
+    },
+    "MealPlanEntry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MealPlanEntry",
+      "type": "object",
+      "description": "Represents a single meal recommendation for a specific day and meal type within a DietPlan.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MealPlanEntry entity."
+        },
+        "dietPlanId": {
+          "type": "string",
+          "description": "Reference to the DietPlan this meal entry belongs to. (Relationship: DietPlan 1:N MealPlanEntry)"
+        },
+        "dayOfWeek": {
+          "type": "string",
+          "description": "The day of the week for which this meal is recommended (e.g., 'Monday', 'Tuesday', or 'Any')."
+        },
+        "mealType": {
+          "type": "string",
+          "description": "The type of meal (e.g., 'Breakfast', 'Lunch', 'Dinner', 'Snack')."
+        },
+        "recipeId": {
+          "type": "string",
+          "description": "Reference to the Recipe recommended for this meal plan entry. (Relationship: Recipe 1:N MealPlanEntry)"
+        },
+        "servingSize": {
+          "type": "string",
+          "description": "The recommended serving size for the recipe (e.g., '1 serving', '200g', '2 chapatis')."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any additional notes or specific instructions for this meal entry from the diet plan."
+        }
+      },
+      "required": [
+        "id",
+        "dietPlanId",
+        "dayOfWeek",
+        "mealType",
+        "recipeId",
+        "servingSize"
+      ]
+    },
+    "FoodItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FoodItem",
+      "type": "object",
+      "description": "Represents a single, raw or basic food item with its detailed nutritional breakdown, forming the comprehensive Indian food database.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the FoodItem entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The common name of the food item (e.g., 'Basmati Rice', 'Mango', 'Coconut Oil')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description or common preparation of the food item."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to an image illustrating the food item.",
+          "format": "uri"
+        },
+        "category": {
+          "type": "string",
+          "description": "The food group or category of the item (e.g., 'Grain', 'Fruit', 'Vegetable', 'Dairy', 'Spice')."
+        },
+        "isUserCreated": {
+          "type": "boolean",
+          "description": "Indicates if this food item was added by a user (true) or is part of the system's default database (false)."
+        },
+        "caloriesKcal": {
+          "type": "number",
+          "description": "Energy content per 100g or standard serving in kilocalories."
+        },
+        "proteinG": {
+          "type": "number",
+          "description": "Protein content per 100g or standard serving in grams."
+        },
+        "carbohydratesG": {
+          "type": "number",
+          "description": "Total carbohydrate content per 100g or standard serving in grams."
+        },
+        "fatG": {
+          "type": "number",
+          "description": "Total fat content per 100g or standard serving in grams."
+        },
+        "fiberG": {
+          "type": "number",
+          "description": "Fiber content per 100g or standard serving in grams."
+        },
+        "sugarG": {
+          "type": "number",
+          "description": "Sugar content per 100g or standard serving in grams."
+        },
+        "sodiumMg": {
+          "type": "number",
+          "description": "Sodium content per 100g or standard serving in milligrams."
+        },
+        "calciumMg": {
+          "type": "number",
+          "description": "Calcium content per 100g or standard serving in milligrams."
+        },
+        "ironMg": {
+          "type": "number",
+          "description": "Iron content per 100g or standard serving in milligrams."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the food item entry was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the food item entry was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "category",
+        "caloriesKcal",
+        "proteinG",
+        "carbohydratesG",
+        "fatG",
+        "createdAt"
+      ]
+    },
+    "Recipe": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Recipe",
+      "type": "object",
+      "description": "Represents a complete recipe, including ingredients and preparation instructions, which can be user-created or part of the system's database.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Recipe entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the recipe (e.g., 'Dal Tadka', 'Kerala Fish Curry')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief overview of the recipe, its taste, or origin."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to an image of the prepared dish.",
+          "format": "uri"
+        },
+        "prepTimeMinutes": {
+          "type": "number",
+          "description": "Estimated time required for preparation steps in minutes."
+        },
+        "cookTimeMinutes": {
+          "type": "number",
+          "description": "Estimated time required for cooking in minutes."
+        },
+        "servings": {
+          "type": "number",
+          "description": "The number of servings this recipe is designed to yield."
+        },
+        "instructions": {
+          "type": "array",
+          "description": "A list of step-by-step instructions for preparing the recipe.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cuisineType": {
+          "type": "string",
+          "description": "The regional or cultural cuisine type of the recipe (e.g., 'South Indian', 'North Indian', 'Keralan')."
+        },
+        "isPublic": {
+          "type": "boolean",
+          "description": "Indicates if the recipe is publicly visible to all users (true) or private to the creator (false)."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Optional reference to the UserProfile who created this recipe, if it's a user-generated recipe. (Relationship: UserProfile 1:N Recipe)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the recipe was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the recipe was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "prepTimeMinutes",
+        "cookTimeMinutes",
+        "servings",
+        "instructions",
+        "cuisineType",
+        "createdAt"
+      ]
+    },
+    "RecipeIngredient": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RecipeIngredient",
+      "type": "object",
+      "description": "A join entity linking a Recipe to a FoodItem, specifying the quantity and unit of an ingredient within that recipe.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the RecipeIngredient entity."
+        },
+        "recipeId": {
+          "type": "string",
+          "description": "Reference to the Recipe this ingredient belongs to. (Relationship: Recipe 1:N RecipeIngredient)"
+        },
+        "foodItemId": {
+          "type": "string",
+          "description": "Reference to the FoodItem that constitutes this ingredient. (Relationship: FoodItem 1:N RecipeIngredient)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The numerical amount of the ingredient used in the recipe."
+        },
+        "unit": {
+          "type": "string",
+          "description": "The unit of measurement for the ingredient's quantity (e.g., 'grams', 'ml', 'cup', 'tsp', 'piece')."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes about the ingredient's preparation (e.g., 'chopped', 'diced', 'peeled')."
+        }
+      },
+      "required": [
+        "id",
+        "recipeId",
+        "foodItemId",
+        "quantity",
+        "unit"
+      ]
+    },
+    "MealLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MealLog",
+      "type": "object",
+      "description": "Records a user's actual meal consumption, including when it was eaten and estimated total nutrition.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MealLog entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who logged this meal. (Relationship: UserProfile 1:N MealLog)"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The exact date and time when the meal was logged.",
+          "format": "date-time"
+        },
+        "mealType": {
+          "type": "string",
+          "description": "The type of meal logged (e.g., 'Breakfast', 'Lunch', 'Dinner', 'Snack')."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any personal notes or reflections the user added about this meal."
+        },
+        "totalCaloriesKcal": {
+          "type": "number",
+          "description": "The estimated total energy content of the meal in kilocalories, calculated from its MealLogItems."
+        },
+        "totalProteinG": {
+          "type": "number",
+          "description": "The estimated total protein content of the meal in grams, calculated from its MealLogItems."
+        },
+        "totalCarbohydratesG": {
+          "type": "number",
+          "description": "The estimated total carbohydrate content of the meal in grams, calculated from its MealLogItems."
+        },
+        "totalFatG": {
+          "type": "number",
+          "description": "The estimated total fat content of the meal in grams, calculated from its MealLogItems."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the meal log entry was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the meal log entry was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "timestamp",
+        "mealType",
+        "totalCaloriesKcal",
+        "totalProteinG",
+        "totalCarbohydratesG",
+        "totalFatG",
+        "createdAt"
+      ]
+    },
+    "MealLogItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MealLogItem",
+      "type": "object",
+      "description": "Represents a single food item or recipe consumed as part of a MealLog.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MealLogItem entity."
+        },
+        "mealLogId": {
+          "type": "string",
+          "description": "Reference to the MealLog this item belongs to. (Relationship: MealLog 1:N MealLogItem)"
+        },
+        "foodItemId": {
+          "type": "string",
+          "description": "Optional reference to a FoodItem logged. At least one of foodItemId or recipeId must be present. (Relationship: FoodItem 1:N MealLogItem)"
+        },
+        "recipeId": {
+          "type": "string",
+          "description": "Optional reference to a Recipe logged. At least one of foodItemId or recipeId must be present. (Relationship: Recipe 1:N MealLogItem)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The numerical amount of the food item or recipe consumed."
+        },
+        "unit": {
+          "type": "string",
+          "description": "The unit of measurement for the quantity (e.g., 'grams', 'ml', 'cup', 'serving', 'piece')."
+        },
+        "recognizedFromImage": {
+          "type": "boolean",
+          "description": "Indicates if this log item was initially identified via visual food recognition (true) or manually entered (false)."
+        },
+        "confidenceScore": {
+          "type": "number",
+          "description": "The confidence score (0-1) provided by the AI's food recognition model, if applicable."
+        }
+      },
+      "required": [
+        "id",
+        "mealLogId",
+        "quantity",
+        "unit"
+      ]
+    },
+    "WeightLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "WeightLog",
+      "type": "object",
+      "description": "Records a user's weight measurement at a specific point in time for progress tracking.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the WeightLog entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who recorded this weight. (Relationship: UserProfile 1:N WeightLog)"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The exact date and time when the weight was recorded.",
+          "format": "date-time"
+        },
+        "weightKg": {
+          "type": "number",
+          "description": "The user's weight in kilograms at the time of recording."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any additional notes the user added about this weight entry."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "timestamp",
+        "weightKg"
+      ]
+    },
+    "ActivityLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ActivityLog",
+      "type": "object",
+      "description": "Records a user's physical activity session for overall health and progress tracking.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ActivityLog entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who performed this activity. (Relationship: UserProfile 1:N ActivityLog)"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The exact date and time when the activity took place.",
+          "format": "date-time"
+        },
+        "activityType": {
+          "type": "string",
+          "description": "The type of physical activity performed (e.g., 'Walking', 'Running', 'Yoga', 'Strength Training')."
+        },
+        "durationMinutes": {
+          "type": "number",
+          "description": "The duration of the activity session in minutes."
+        },
+        "caloriesBurnedKcal": {
+          "type": "number",
+          "description": "Estimated calories burned during the activity in kilocalories."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any additional notes about this activity session."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "timestamp",
+        "activityType",
+        "durationMinutes"
+      ]
+    },
+    "LabReport": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LabReport",
+      "type": "object",
+      "description": "Stores metadata about a user's uploaded lab report PDF for automated analysis.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the LabReport entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who uploaded this lab report. (Relationship: UserProfile 1:N LabReport)"
+        },
+        "uploadTimestamp": {
+          "type": "string",
+          "description": "The date and time when the lab report PDF was uploaded.",
+          "format": "date-time"
+        },
+        "reportName": {
+          "type": "string",
+          "description": "A descriptive name for the lab report (e.g., 'Thyrocare Lipid Profile', 'Dr. Lal PathLabs Blood Test')."
+        },
+        "reportDate": {
+          "type": "string",
+          "description": "The date when the actual lab tests were conducted, as indicated on the report.",
+          "format": "date"
+        },
+        "documentUrl": {
+          "type": "string",
+          "description": "URL to the stored PDF document of the lab report.",
+          "format": "uri"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current processing status of the lab report (e.g., 'Uploaded', 'Processing', 'Analyzed', 'Error')."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "uploadTimestamp",
+        "reportName",
+        "reportDate",
+        "documentUrl",
+        "status"
+      ]
+    },
+    "LabResultMarker": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LabResultMarker",
+      "type": "object",
+      "description": "Stores individual parsed and analyzed markers and their values extracted from a LabReport.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the LabResultMarker entity."
+        },
+        "labReportId": {
+          "type": "string",
+          "description": "Reference to the LabReport this marker was extracted from. (Relationship: LabReport 1:N LabResultMarker)"
+        },
+        "markerName": {
+          "type": "string",
+          "description": "The name of the specific lab marker (e.g., 'HbA1c', 'Fasting Glucose', 'Total Cholesterol')."
+        },
+        "value": {
+          "type": "number",
+          "description": "The numerical result value for this lab marker."
+        },
+        "unit": {
+          "type": "string",
+          "description": "The unit of measurement for the marker value (e.g., 'mg/dL', '%', 'mmol/L')."
+        },
+        "referenceRangeMin": {
+          "type": "number",
+          "description": "The minimum value of the established normal reference range for this marker."
+        },
+        "referenceRangeMax": {
+          "type": "number",
+          "description": "The maximum value of the established normal reference range for this marker."
+        },
+        "isAbnormal": {
+          "type": "boolean",
+          "description": "Indicates if the marker's value falls outside the normal reference range (true) or within it (false)."
+        },
+        "analysisNotes": {
+          "type": "string",
+          "description": "AI-generated notes or personalized insights based on the marker's value and comparison to reference ranges."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp indicating when this specific lab result marker was parsed and analyzed.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "labReportId",
+        "markerName",
+        "value",
+        "unit",
+        "isAbnormal",
+        "timestamp"
+      ]
+    },
+    "AIChatSession": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AIChatSession",
+      "type": "object",
+      "description": "Represents a single conversational session between a user and the AI-Powered Personal Diet Coach.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AIChatSession entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who initiated this chat session. (Relationship: UserProfile 1:N AIChatSession)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "The date and time when the chat session began.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "The date and time when the chat session ended, if applicable.",
+          "format": "date-time"
+        },
+        "sessionType": {
+          "type": "string",
+          "description": "The primary topic or purpose of the chat session (e.g., 'Diet Advice', 'Recipe Suggestion', 'Health Query', 'Lab Report Inquiry')."
+        },
+        "language": {
+          "type": "string",
+          "description": "The Indian language used for this specific chat session (e.g., 'en', 'ml', 'hi')."
+        },
+        "isArchived": {
+          "type": "boolean",
+          "description": "Indicates if the chat session has been archived by the user or system for historical purposes."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "startTime",
+        "sessionType",
+        "language"
+      ]
+    },
+    "AIChatMessage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AIChatMessage",
+      "type": "object",
+      "description": "Represents an individual message exchanged within an AI chat session.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AIChatMessage entity."
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Reference to the AIChatSession this message belongs to. (Relationship: AIChatSession 1:N AIChatMessage)"
+        },
+        "senderType": {
+          "type": "string",
+          "description": "Indicates whether the message was sent by the 'User' or the 'AI'."
+        },
+        "content": {
+          "type": "string",
+          "description": "The textual content of the message."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The exact date and time when the message was sent.",
+          "format": "date-time"
+        },
+        "feedbackRating": {
+          "type": "number",
+          "description": "Optional user feedback rating (1-5 stars) for the AI's response message."
+        },
+        "isRelevant": {
+          "type": "boolean",
+          "description": "Optional user feedback indicating if the AI's response was relevant to the query."
+        }
+      },
+      "required": [
+        "id",
+        "sessionId",
+        "senderType",
+        "content",
+        "timestamp"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores a user's profile and core health information. Access is restricted to the owner matching `{userId}` in the path."
+        }
+      },
+      {
+        "path": "/healthConditions/{conditionId}",
+        "definition": {
+          "entityName": "HealthCondition",
+          "schema": {
+            "$ref": "#/backend/entities/HealthCondition"
+          },
+          "description": "Globally accessible, system-managed health conditions. Read-only for all users, write access restricted to system/admin. Does not include user-specific authorization fields.",
+          "params": [
+            {
+              "name": "conditionId",
+              "description": "The unique ID of the health condition."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/dietPlans/{dietPlanId}",
+        "definition": {
+          "entityName": "DietPlan",
+          "schema": {
+            "$ref": "#/backend/entities/DietPlan"
+          },
+          "description": "Stores personalized diet plans for a specific user. Access is restricted to the owner matching `{userId}` in the path. The document also includes `userId` for querying and clarity.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who owns this diet plan."
+            },
+            {
+              "name": "dietPlanId",
+              "description": "The unique ID of the diet plan."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/dietPlans/{dietPlanId}/mealPlanEntries/{mealPlanEntryId}",
+        "definition": {
+          "entityName": "MealPlanEntry",
+          "schema": {
+            "$ref": "#/backend/entities/MealPlanEntry"
+          },
+          "description": "Represents a single meal recommendation within a user's diet plan. Access is restricted to the owner matching `{userId}` in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who owns the parent diet plan."
+            },
+            {
+              "name": "dietPlanId",
+              "description": "The unique ID of the parent diet plan."
+            },
+            {
+              "name": "mealPlanEntryId",
+              "description": "The unique ID of the meal plan entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/systemFoodItems/{foodItemId}",
+        "definition": {
+          "entityName": "FoodItem",
+          "schema": {
+            "$ref": "#/backend/entities/FoodItem"
+          },
+          "description": "Stores system-curated, public food items from the comprehensive Indian food database. Read-only for all users, write access restricted to system/admin. No user-specific authorization fields.",
+          "params": [
+            {
+              "name": "foodItemId",
+              "description": "The unique ID of the system food item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/communityFoodItems/{foodItemId}",
+        "definition": {
+          "entityName": "FoodItem",
+          "schema": {
+            "$ref": "#/backend/entities/FoodItem"
+          },
+          "description": "Stores user-contributed food items that are made public. Read-only for all users. Write access is restricted to the original creator, explicitly identified by a `creatorId` field within the document for authorization independence. This collection corresponds to `isUserCreated: true` and `isPublic: true` if such a public flag existed for FoodItem.",
+          "params": [
+            {
+              "name": "foodItemId",
+              "description": "The unique ID of the community food item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/privateFoodItems/{foodItemId}",
+        "definition": {
+          "entityName": "FoodItem",
+          "schema": {
+            "$ref": "#/backend/entities/FoodItem"
+          },
+          "description": "Stores private food items created by a specific user. Access is restricted to the owner matching `{userId}` in the path. Corresponds to `isUserCreated: true` and implicitly private.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who owns this private food item."
+            },
+            {
+              "name": "foodItemId",
+              "description": "The unique ID of the private food item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/systemRecipes/{recipeId}",
+        "definition": {
+          "entityName": "Recipe",
+          "schema": {
+            "$ref": "#/backend/entities/Recipe"
+          },
+          "description": "Stores system-curated, public recipes. Read-only for all users, write access restricted to system/admin. The `userId` field (creator) is typically absent, and `isPublic` is implicitly true.",
+          "params": [
+            {
+              "name": "recipeId",
+              "description": "The unique ID of the system recipe."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/systemRecipes/{recipeId}/ingredients/{recipeIngredientId}",
+        "definition": {
+          "entityName": "RecipeIngredient",
+          "schema": {
+            "$ref": "#/backend/entities/RecipeIngredient"
+          },
+          "description": "Ingredients for system-curated public recipes. Read-only for all users, write access restricted to system/admin. Implicitly `isPublic` and does not contain `recipeCreatorId`.",
+          "params": [
+            {
+              "name": "recipeId",
+              "description": "The unique ID of the parent system recipe."
+            },
+            {
+              "name": "recipeIngredientId",
+              "description": "The unique ID of the recipe ingredient."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/communityRecipes/{recipeId}",
+        "definition": {
+          "entityName": "Recipe",
+          "schema": {
+            "$ref": "#/backend/entities/Recipe"
+          },
+          "description": "Stores user-contributed recipes that are made public. Read-only for all users. Write access is restricted to the original creator, explicitly identified by the `userId` field within the document for authorization independence. The `isPublic` field is true.",
+          "params": [
+            {
+              "name": "recipeId",
+              "description": "The unique ID of the community recipe."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/communityRecipes/{recipeId}/ingredients/{recipeIngredientId}",
+        "definition": {
+          "entityName": "RecipeIngredient",
+          "schema": {
+            "$ref": "#/backend/entities/RecipeIngredient"
+          },
+          "description": "Ingredients for user-contributed public recipes. Read-only for all users. Write access is restricted to the original recipe creator. The document will include a denormalized `recipeCreatorId` (copied from the parent `Recipe`) for authorization independence, and implicitly `isPublic`.",
+          "params": [
+            {
+              "name": "recipeId",
+              "description": "The unique ID of the parent community recipe."
+            },
+            {
+              "name": "recipeIngredientId",
+              "description": "The unique ID of the recipe ingredient."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/privateRecipes/{recipeId}",
+        "definition": {
+          "entityName": "Recipe",
+          "schema": {
+            "$ref": "#/backend/entities/Recipe"
+          },
+          "description": "Stores private recipes created by a specific user. Access is restricted to the owner matching `{userId}` in the path. The `isPublic` field is false.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who owns this private recipe."
+            },
+            {
+              "name": "recipeId",
+              "description": "The unique ID of the private recipe."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/privateRecipes/{recipeId}/ingredients/{recipeIngredientId}",
+        "definition": {
+          "entityName": "RecipeIngredient",
+          "schema": {
+            "$ref": "#/backend/entities/RecipeIngredient"
+          },
+          "description": "Ingredients for a user's private recipe. Access is restricted to the owner matching `{userId}` in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who owns the parent private recipe."
+            },
+            {
+              "name": "recipeId",
+              "description": "The unique ID of the parent private recipe."
+            },
+            {
+              "name": "recipeIngredientId",
+              "description": "The unique ID of the recipe ingredient."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/mealLogs/{mealLogId}",
+        "definition": {
+          "entityName": "MealLog",
+          "schema": {
+            "$ref": "#/backend/entities/MealLog"
+          },
+          "description": "Records a user's actual meal consumption. Access is restricted to the owner matching `{userId}` in the path. The document also includes `userId` for querying and clarity.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who logged this meal."
+            },
+            {
+              "name": "mealLogId",
+              "description": "The unique ID of the meal log entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/mealLogs/{mealLogId}/items/{mealLogItemId}",
+        "definition": {
+          "entityName": "MealLogItem",
+          "schema": {
+            "$ref": "#/backend/entities/MealLogItem"
+          },
+          "description": "Represents a single food item or recipe consumed as part of a MealLog. Access is restricted to the owner matching `{userId}` in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who owns the parent meal log."
+            },
+            {
+              "name": "mealLogId",
+              "description": "The unique ID of the parent meal log."
+            },
+            {
+              "name": "mealLogItemId",
+              "description": "The unique ID of the meal log item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/weightLogs/{weightLogId}",
+        "definition": {
+          "entityName": "WeightLog",
+          "schema": {
+            "$ref": "#/backend/entities/WeightLog"
+          },
+          "description": "Records a user's weight measurement over time. Access is restricted to the owner matching `{userId}` in the path. The document also includes `userId` for querying and clarity.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who recorded this weight."
+            },
+            {
+              "name": "weightLogId",
+              "description": "The unique ID of the weight log entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/activityLogs/{activityLogId}",
+        "definition": {
+          "entityName": "ActivityLog",
+          "schema": {
+            "$ref": "#/backend/entities/ActivityLog"
+          },
+          "description": "Records a user's physical activity sessions. Access is restricted to the owner matching `{userId}` in the path. The document also includes `userId` for querying and clarity.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who performed this activity."
+            },
+            {
+              "name": "activityLogId",
+              "description": "The unique ID of the activity log entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/labReports/{labReportId}",
+        "definition": {
+          "entityName": "LabReport",
+          "schema": {
+            "$ref": "#/backend/entities/LabReport"
+          },
+          "description": "Stores metadata about a user's uploaded lab report PDFs. Access is restricted to the owner matching `{userId}` in the path. The document also includes `userId` for querying and clarity.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who uploaded this lab report."
+            },
+            {
+              "name": "labReportId",
+              "description": "The unique ID of the lab report."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/labReports/{labReportId}/markers/{labResultMarkerId}",
+        "definition": {
+          "entityName": "LabResultMarker",
+          "schema": {
+            "$ref": "#/backend/entities/LabResultMarker"
+          },
+          "description": "Stores individual parsed markers and their values extracted from a user's lab report. Access is restricted to the owner matching `{userId}` in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who owns the parent lab report."
+            },
+            {
+              "name": "labReportId",
+              "description": "The unique ID of the parent lab report."
+            },
+            {
+              "name": "labResultMarkerId",
+              "description": "The unique ID of the lab result marker."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/chatSessions/{chatSessionId}",
+        "definition": {
+          "entityName": "AIChatSession",
+          "schema": {
+            "$ref": "#/backend/entities/AIChatSession"
+          },
+          "description": "Represents a user's conversational session with the AI coach. Access is restricted to the owner matching `{userId}` in the path. The document also includes `userId` for querying and clarity.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who initiated this chat session."
+            },
+            {
+              "name": "chatSessionId",
+              "description": "The unique ID of the AI chat session."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/chatSessions/{chatSessionId}/messages/{chatMessageId}",
+        "definition": {
+          "entityName": "AIChatMessage",
+          "schema": {
+            "$ref": "#/backend/entities/AIChatMessage"
+          },
+          "description": "Represents an individual message exchanged within an AI chat session. Access is restricted to the owner matching `{userId}` in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who owns the parent chat session."
+            },
+            {
+              "name": "chatSessionId",
+              "description": "The unique ID of the parent AI chat session."
+            },
+            {
+              "name": "chatMessageId",
+              "description": "The unique ID of the chat message."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure for NutriKeralam is designed with a strong emphasis on Authorization Independence, Structural Segregation, and consistent Access Modeling to ensure security, scalability, and debuggability.\n\n**Authorization Independence (CRITICAL):** This principle is primarily achieved by: \n1.  **Path-Based Ownership:** For all user-specific data (e.g., UserProfile, DietPlans, MealLogs, LabReports, Chat Sessions), documents are nested directly under `/users/{userId}/`. This makes `request.auth.uid == userId` the foundational rule for all read/write operations within these subcollections, eliminating the need for `get()` calls to verify ownership. For example, a user's `DietPlan` is at `/users/{userId}/dietPlans/{dietPlanId}`, and its `MealPlanEntry` is at `/users/{userId}/dietPlans/{dietPlanId}/mealPlanEntries/{mealPlanEntryId}`. The `userId` is always available in the path, ensuring atomic and independent authorization checks.\n2.  **Denormalization of Authorization Context:** For shared or community data where ownership might influence write access (e.g., user-contributed public recipes), the `creatorId` (owner) is denormalized directly into the document itself (e.g., `communityRecipes/{recipeId}` will have a `creatorId` field, and `communityRecipes/{recipeId}/ingredients/{recipeIngredientId}` will denormalize `recipeCreatorId`). This allows security rules to check `request.auth.uid == resource.data.creatorId` or `request.auth.uid == resource.data.recipeCreatorId` without requiring `get()` calls to a parent document or another collection, thus preventing issues with atomic operations and simplifying rule debugging.\n\n**QAPs (Rules are not Filters):** This structure supports secure `list` operations through **Structural Segregation** and clear access models:\n1.  **Segregation of Data Posture:** Data is segregated into distinct top-level collections based on its security posture:\n    *   `/users/{userId}/...`: Private user data, implicitly filtered by `userId`. List operations here are automatically secure as they are scoped to the authenticated user.\n    *   `/systemFoodItems/{foodItemId}` and `/systemRecipes/{recipeId}`: System-managed, publicly readable collections. Write access is restricted to administrative roles (not detailed in this output, but would be handled via `/roles_admin/{uid}`). All items in these collections are intended for public consumption, so `allow list: true` is safe.\n    *   `/communityFoodItems/{foodItemId}` and `/communityRecipes/{recipeId}`: User-contributed public items. These are publicly readable. Write access is restricted to the original `creatorId` (denormalized in the document) or admin. `list` operations are safe as all documents within are publicly visible.\n    *   `/healthConditions/{conditionId}`: System-managed, public read-only collection. Safe for `list` operations.\n2.  **Explicit Ownership:** By placing user-owned data under their respective `/users/{userId}/` paths, `list` queries from an authenticated user automatically only return their own data, preventing data leakage and ensuring rules are not used as filters.\n\n**Additional Principles Adherence:**\n*   **DBAC:** Roles are implicitly handled via `creatorId` fields for community content and path-based `userId` for private content. Explicit admin roles would be handled by a dedicated `/admin_roles/{uid}` collection for checking existence.\n*   **Clarity of Intent:** Collection names (e.g., `systemFoodItems`, `communityRecipes`, `privateFoodItems`) clearly denote the security posture and ownership model.\n*   **Invariants:** Timestamps (`createdAt`, `updatedAt`) are standard. Ownership (via `userId`, `creatorId`) is consistently applied. State modeling uses explicit `status` or `isActive` fields."
+  }
+}

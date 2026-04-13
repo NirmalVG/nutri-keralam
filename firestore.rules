@@ -1,0 +1,272 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * NUTRIKERALAM SECURITY RULES
+     *
+     * Core Philosophy:
+     * This ruleset implements a robust, multi-tier security model for a health and nutrition application. 
+     * It prioritizes user privacy for personal health data while facilitating a shared community 
+     * ecosystem for recipes and food items.
+     *
+     * Data Structure:
+     * 1. Private User Data: Highly sensitive data (profiles, logs, diet plans, lab reports, chats) 
+     *    is strictly nested under /users/{userId}/ paths. Authorization is path-based.
+     * 2. System Data: Curated databases (health conditions, system recipes/foods) are globally 
+     *    readable but restricted to administrative writes.
+     * 3. Community Data: User-contributed content (community recipes/foods) is globally readable 
+     *    but restricts modifications to the original creator via denormalized ownership fields.
+     *
+     * Key Security Decisions:
+     * - Strict Structural Segregation: Private data and public contributions are stored in 
+     *   separate collections to prevent accidental leakage and simplify query scoping.
+     * - Denormalization for Performance: Authorization fields (e.g., creatorId) are copied into 
+     *   child documents (like recipe ingredients) to allow atomic security checks without 
+     *   expensive cross-document lookups (get() calls).
+     * - Prototyping Flexibility: Rules focus on strict authorization (who can write) while 
+     *   maintaining flexibility on data shapes to allow rapid feature iteration.
+     */
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    /** Checks if the request is from a signed-in user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** Checks if the authenticated user's UID matches the provided userId. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** Checks if the document exists and the authenticated user is the owner. */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    /** Placeholder for administrative access. */
+    function isAdmin() {
+      return false; // TODO: Implement admin role lookup if needed (e.g., get(/databases/$(database)/documents/admins/$(request.auth.uid)) != null)
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Rules for the core user profile.
+     * @path /users/{userId}
+     * @allow (get, create, update) if the user is the owner.
+     * @deny (create) if the userId in data doesn't match the path.
+     * @principle Enforces strict path-based ownership and relational integrity for the root user document.
+     */
+    match /users/{userId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if false; // Profiles are typically not deleted by users in this app
+    }
+
+    /**
+     * @description System-managed health conditions used for diet plan tailoring.
+     * @path /healthConditions/{conditionId}
+     * @allow (get, list) for any user.
+     * @deny (write) for non-admin users.
+     * @principle Public read-only system collection.
+     */
+    match /healthConditions/{conditionId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Personalized diet plans for specific users.
+     * @path /users/{userId}/dietPlans/{dietPlanId}
+     * @allow (get, list, create, update) if authenticated owner.
+     * @deny (update) if ownership field is modified.
+     * @principle Path-based ownership with immutable identity fields.
+     */
+    match /users/{userId}/dietPlans/{dietPlanId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Meal recommendations nested within a user's diet plan.
+       * @path /users/{userId}/dietPlans/{dietPlanId}/mealPlanEntries/{mealPlanEntryId}
+       * @allow (all) for the owner of the parent diet plan.
+       * @principle Hierarchical ownership validation.
+       */
+      match /mealPlanEntries/{mealPlanEntryId} {
+        allow get, list, create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description System-curated food database items.
+     * @path /systemFoodItems/{foodItemId}
+     * @allow (get, list) for any user.
+     * @principle Public read-only system catalog.
+     */
+    match /systemFoodItems/{foodItemId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description User-contributed public food items.
+     * @path /communityFoodItems/{foodItemId}
+     * @allow (get, list) for any user; (create, update) for the specific creator.
+     * @deny (update) if creatorId is changed.
+     * @principle Public consumption with owner-only modifications using denormalized fields.
+     */
+    match /communityFoodItems/{foodItemId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.creatorId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.creatorId == request.auth.uid && request.resource.data.creatorId == resource.data.creatorId;
+      allow delete: if isSignedIn() && resource.data.creatorId == request.auth.uid;
+    }
+
+    /**
+     * @description Private food items created by a specific user for personal use.
+     * @path /users/{userId}/privateFoodItems/{foodItemId}
+     * @allow (all) for the specific owner.
+     * @principle Private user-scoped collection.
+     */
+    match /users/{userId}/privateFoodItems/{foodItemId} {
+      allow get, list, create: if isOwner(userId);
+      allow update, delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description System-curated public recipes.
+     * @path /systemRecipes/{recipeId}
+     * @allow (get, list) for any user.
+     * @principle Public read-only catalog with sub-ingredient support.
+     */
+    match /systemRecipes/{recipeId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+
+      match /ingredients/{ingredientId} {
+        allow get, list: if true;
+        allow create, update, delete: if isAdmin();
+      }
+    }
+
+    /**
+     * @description User-contributed public recipes.
+     * @path /communityRecipes/{recipeId}
+     * @allow (get, list) for any user; (write) for the creator identified by userId field.
+     * @principle Public read with owner-only writes.
+     */
+    match /communityRecipes/{recipeId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && request.resource.data.userId == resource.data.userId;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      /**
+       * @description Ingredients for community recipes, securing access using denormalized recipeCreatorId.
+       * @path /communityRecipes/{recipeId}/ingredients/{ingredientId}
+       * @principle Authorization Independence: Uses denormalized field to avoid parent document get().
+       */
+      match /ingredients/{ingredientId} {
+        allow get, list: if true;
+        allow create: if isSignedIn() && request.resource.data.recipeCreatorId == request.auth.uid;
+        allow update: if isSignedIn() && resource.data.recipeCreatorId == request.auth.uid && request.resource.data.recipeCreatorId == resource.data.recipeCreatorId;
+        allow delete: if isSignedIn() && resource.data.recipeCreatorId == request.auth.uid;
+      }
+    }
+
+    /**
+     * @description Private recipes created by a user.
+     * @path /users/{userId}/privateRecipes/{recipeId}
+     * @allow (all) for the path-matched owner.
+     */
+    match /users/{userId}/privateRecipes/{recipeId} {
+      allow get, list, create: if isOwner(userId);
+      allow update, delete: if isExistingOwner(userId);
+
+      match /ingredients/{ingredientId} {
+        allow get, list, create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description User meal logs for tracking nutrition.
+     * @path /users/{userId}/mealLogs/{mealLogId}
+     * @allow (all) for the owner.
+     * @principle Path-based ownership for high-frequency write data.
+     */
+    match /users/{userId}/mealLogs/{mealLogId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+
+      match /items/{itemId} {
+        allow get, list, create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description User weight tracking logs.
+     * @path /users/{userId}/weightLogs/{weightLogId}
+     */
+    match /users/{userId}/weightLogs/{weightLogId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description User physical activity logs.
+     * @path /users/{userId}/activityLogs/{activityLogId}
+     */
+    match /users/{userId}/activityLogs/{activityLogId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description User lab report metadata and parsed markers.
+     * @path /users/{userId}/labReports/{labReportId}
+     * @principle Protects sensitive medical data via strict ownership.
+     */
+    match /users/{userId}/labReports/{labReportId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+
+      match /markers/{markerId} {
+        allow get, list, create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description AI Chat history and individual messages.
+     * @path /users/{userId}/chatSessions/{chatSessionId}
+     * @principle User-scoped conversational data.
+     */
+    match /users/{userId}/chatSessions/{chatSessionId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+
+      match /messages/{messageId} {
+        allow get, list, create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
+    }
+  }
+}
